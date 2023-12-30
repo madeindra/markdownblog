@@ -94,3 +94,8 @@ func EnsureParams(v ...string) error {
 func IsEmptyString(s string) bool {
 	return strings.TrimSpace(s) == ""
 }
+
+// IsMarkdownFile checks whether a file is markdown or not
+func IsMarkdownFile(filename string) bool {
+	return strings.HasSuffix(filename, ".md")
+}
