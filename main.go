@@ -2,9 +2,13 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"strings"
 
+	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/parser"
 	"github.com/madeindra/markdownblog/utils"
 	"github.com/urfave/cli/v2"
 )
@@ -13,6 +17,7 @@ const (
 	flagRepo   = "repo"
 	flagBranch = "branch"
 	flagToken  = "token"
+	flagOut    = "out"
 )
 
 func main() {
@@ -54,11 +59,17 @@ func App() *cli.App {
 				Aliases: []string{"t"},
 				Usage:   "Token for private repository",
 			},
+			&cli.StringFlag{
+				Name:    flagOut,
+				Aliases: []string{"o"},
+				Usage:   "Output directory for result",
+				Value:   "generated",
+			},
 		},
 		// validate required params
 		Before: func(c *cli.Context) error {
-			// ensure all required parameters are provided
-			err := utils.EnsureParams(c.String(flagRepo))
+			// ensure all required parameters are not empty
+			err := utils.EnsureParams(c.String(flagRepo), c.String(flagOut))
 			if err != nil {
 				return err
 			}
@@ -76,6 +87,7 @@ func App() *cli.App {
 			// trim space from parameters
 			gitBranch := strings.TrimSpace(c.String(flagBranch))
 			gitToken := strings.TrimSpace(c.String(flagToken))
+			outDir := strings.TrimSpace(c.String(flagOut))
 
 			// check whether the git repository is private or public by the presence of git token
 			isPrivate := !utils.IsEmptyString(gitToken)
@@ -89,19 +101,61 @@ func App() *cli.App {
 			// ready to go, print welcome message
 			fmt.Println("Welcome to Markdown Blog generator")
 
-			// !DELETE LATER
-			fmt.Println(files)
-
-			// TODO: parse each markdown into html using gomarkdown
-
-			// TODO: put each parsed file into the templates according to the parameters (theme)
-
-			// TODO: create a directory for the result (outdir)
-
-			// TODO: put all as html files into directory according to the parameters (outdir, category)
-
-			// TODO: create index.html as homepage according to the parameters (theme, title, etc)
-			return nil
+			return generateBlog(files, outDir)
 		},
 	}
+}
+
+func generateBlog(files []utils.File, outDir string) error {
+	// loop through all files
+	for _, file := range files {
+		// TODO: read content of files by downloading content
+		content, err := downloadContent(file.URL)
+		if err != nil {
+			return err
+		}
+
+		// TODO: parse each markdown into html using gomarkdown
+		parseContent(content)
+
+		// TODO: put each parsed file into the templates according to the parameters (theme)
+	}
+
+	// TODO: create a directory for the result (outdir)
+
+	// TODO: put all as html files into directory according to the parameters (outdir, category)
+
+	// TODO: create index.html as homepage according to the parameters (theme, title, etc)
+	return nil
+}
+
+func downloadContent(url string) ([]byte, error) {
+	// download file from url
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("error: failed to download file")
+	}
+	defer resp.Body.Close()
+
+	// read the content of the file
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error: failed to read file")
+	}
+
+	return content, nil
+}
+
+func parseContent(content []byte) error {
+	// initialize parser
+	extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
+	mdParser := parser.NewWithExtensions(extensions)
+
+	// parse markdown content
+	result := mdParser.Parse(content)
+
+	// !DELETE LATER: print the result
+	ast.Print(os.Stdout, result)
+
+	return nil
 }
