@@ -23,7 +23,6 @@ func fetchGithubFiles(gitDetail GitDetail, branch, token string, isPrivate bool)
 	if err != nil {
 		return nil, fmt.Errorf("error: failed to prepare github http request")
 	}
-	defer req.Body.Close()
 
 	// set authorization header if the repository is private
 	if isPrivate {
