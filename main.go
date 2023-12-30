@@ -130,7 +130,7 @@ func generateBlog(files []utils.File, outDir string) error {
 		result := utils.MarkdownToHTML(content)
 
 		// TODO: put each parsed file into the templates according to the parameters (theme)
-		filepath := path.Join("examples", "templates", "index.html")
+		filepath := path.Join("examples", "templates", "template.html")
 		tmpl, err := template.ParseFiles(filepath)
 		if err != nil {
 			return err
