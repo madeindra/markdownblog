@@ -23,6 +23,7 @@ func fetchGithubFiles(gitDetail GitDetail, branch, token string, isPrivate bool)
 	if err != nil {
 		return nil, fmt.Errorf("error: failed to prepare github http request")
 	}
+	defer req.Body.Close()
 
 	// set authorization header if the repository is private
 	if isPrivate {
@@ -40,6 +41,7 @@ func fetchGithubFiles(gitDetail GitDetail, branch, token string, isPrivate bool)
 	if err != nil {
 		return nil, fmt.Errorf("error: failed to send github http request")
 	}
+	defer resp.Body.Close()
 
 	// check whether the response is ok
 	if resp.StatusCode != http.StatusOK {
@@ -53,7 +55,22 @@ func fetchGithubFiles(gitDetail GitDetail, branch, token string, isPrivate bool)
 		return nil, fmt.Errorf("error: failed to parse github response body")
 	}
 
+	filterGithubFiles(&files)
+
 	return translateGithubFile(files), nil
+}
+
+// filterGithubFiles filter files from github response
+func filterGithubFiles(files *[]GithubFile) {
+	filteredFiles := []GithubFile{}
+	for _, f := range *files {
+		// only add file with type file and markdown extension
+		if f.Type == "file" && IsMarkdownFile(f.Name) {
+			filteredFiles = append(filteredFiles, f)
+		}
+	}
+
+	*files = filteredFiles
 }
 
 // translateGithubFile translates github file type to file type for easier use
