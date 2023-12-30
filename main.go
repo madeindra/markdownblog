@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"html"
 	"os"
+	"path"
 	"strings"
+	"text/template"
 
 	"github.com/madeindra/markdownblog/utils"
 	"github.com/urfave/cli/v2"
@@ -103,6 +106,18 @@ func App() *cli.App {
 }
 
 func generateBlog(files []utils.File, outDir string) error {
+	// remove the output directory if exists
+	err := os.RemoveAll(outDir)
+	if err != nil {
+		return err
+	}
+
+	// create a new output directory
+	err = os.MkdirAll(outDir, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
 	// loop through all files
 	for _, file := range files {
 		// read content of files by downloading content
@@ -114,16 +129,41 @@ func generateBlog(files []utils.File, outDir string) error {
 		// convert each markdown into html
 		result := utils.MarkdownToHTML(content)
 
-		// !DELETE THIS!
-		fmt.Println(result)
-
 		// TODO: put each parsed file into the templates according to the parameters (theme)
+		filepath := path.Join("examples", "templates", "index.html")
+		tmpl, err := template.ParseFiles(filepath)
+		if err != nil {
+			return err
+		}
+
+		// TODO: create template data
+		data := map[string]string{
+			"title":    "Hello World",
+			"contents": html.UnescapeString(result),
+		}
+
+		// create file writer
+		filename := fmt.Sprintf("%s.html", strings.TrimSuffix(file.Name, ".md"))
+		newFile, err := os.Create(path.Join(outDir, filename))
+		if err != nil {
+			return err
+		}
+		defer newFile.Close()
+
+		// execute template and write the result into the new file
+		err = tmpl.Execute(newFile, data)
+		if err != nil {
+			return err
+		}
 	}
 
-	// TODO: create a directory for the result (outdir)
-
-	// TODO: put all as html files into directory according to the parameters (outdir, category)
+	// TODO: copy assets (css, js, etc) into the output directory
+	err = utils.CopyDirectory(path.Join("examples", "assets"), path.Join(outDir, "assets"))
+	if err != nil {
+		return err
+	}
 
 	// TODO: create index.html as homepage according to the parameters (theme, title, etc)
+
 	return nil
 }
