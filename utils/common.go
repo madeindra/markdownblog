@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path"
 	"strings"
 )
 
@@ -118,4 +120,73 @@ func DownloadContent(url string) ([]byte, error) {
 	}
 
 	return content, nil
+}
+
+// CopyDirectory copies a directory and all its contents to a new directory
+func CopyDirectory(src, dest string) error {
+	// open the source directory
+	srcDir, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("error: failed to open source directory: %v", err)
+	}
+	defer srcDir.Close()
+
+	// create the destination directory
+	err = os.MkdirAll(dest, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("error: failed to create destination directory: %v", err)
+	}
+
+	// read all files and subdirectories in the source directory
+	fileInfos, err := srcDir.Readdir(-1)
+	if err != nil {
+		return fmt.Errorf("error: failed to read source directory: %v", err)
+	}
+
+	// copy each file and subdirectory to the destination directory
+	for _, fileInfo := range fileInfos {
+		srcPath := path.Join(src, fileInfo.Name())
+		destPath := path.Join(dest, fileInfo.Name())
+
+		if fileInfo.IsDir() {
+			// recursively copy subdirectories
+			err = CopyDirectory(srcPath, destPath)
+			if err != nil {
+				return fmt.Errorf("error: failed to copy subdirectory: %v", err)
+			}
+		} else {
+			// copy regular files
+			err = CopyFile(srcPath, destPath)
+			if err != nil {
+				return fmt.Errorf("error: failed to copy file: %v", err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// CopyFile copies a file from source to destination
+func CopyFile(src, dest string) error {
+	// open the source file
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("error: failed to open source file: %v", err)
+	}
+	defer srcFile.Close()
+
+	// create the destination file
+	destFile, err := os.Create(dest)
+	if err != nil {
+		return fmt.Errorf("error: failed to create destination file: %v", err)
+	}
+	defer destFile.Close()
+
+	// copy the contents of the source file to the destination file
+	_, err = io.Copy(destFile, srcFile)
+	if err != nil {
+		return fmt.Errorf("error: failed to copy file contents: %v", err)
+	}
+
+	return nil
 }
