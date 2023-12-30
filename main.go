@@ -2,13 +2,9 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"strings"
 
-	"github.com/gomarkdown/markdown/ast"
-	"github.com/gomarkdown/markdown/parser"
 	"github.com/madeindra/markdownblog/utils"
 	"github.com/urfave/cli/v2"
 )
@@ -109,14 +105,17 @@ func App() *cli.App {
 func generateBlog(files []utils.File, outDir string) error {
 	// loop through all files
 	for _, file := range files {
-		// TODO: read content of files by downloading content
-		content, err := downloadContent(file.URL)
+		// read content of files by downloading content
+		content, err := utils.DownloadContent(file.URL)
 		if err != nil {
 			return err
 		}
 
-		// TODO: parse each markdown into html using gomarkdown
-		parseContent(content)
+		// convert each markdown into html
+		result := utils.MarkdownToHTML(content)
+
+		// !DELETE THIS!
+		fmt.Println(result)
 
 		// TODO: put each parsed file into the templates according to the parameters (theme)
 	}
@@ -126,36 +125,5 @@ func generateBlog(files []utils.File, outDir string) error {
 	// TODO: put all as html files into directory according to the parameters (outdir, category)
 
 	// TODO: create index.html as homepage according to the parameters (theme, title, etc)
-	return nil
-}
-
-func downloadContent(url string) ([]byte, error) {
-	// download file from url
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("error: failed to download file")
-	}
-	defer resp.Body.Close()
-
-	// read the content of the file
-	content, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("error: failed to read file")
-	}
-
-	return content, nil
-}
-
-func parseContent(content []byte) error {
-	// initialize parser
-	extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
-	mdParser := parser.NewWithExtensions(extensions)
-
-	// parse markdown content
-	result := mdParser.Parse(content)
-
-	// !DELETE LATER: print the result
-	ast.Print(os.Stdout, result)
-
 	return nil
 }

@@ -2,6 +2,8 @@ package utils
 
 import (
 	"fmt"
+	"io"
+	"net/http"
 	"strings"
 )
 
@@ -98,4 +100,22 @@ func IsEmptyString(s string) bool {
 // IsMarkdownFile checks whether a file is markdown or not
 func IsMarkdownFile(filename string) bool {
 	return strings.HasSuffix(filename, ".md")
+}
+
+// DownloadContent downloads file from url and return the content
+func DownloadContent(url string) ([]byte, error) {
+	// download file from url
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("error: failed to download file")
+	}
+	defer resp.Body.Close()
+
+	// read the content of the file
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error: failed to read file")
+	}
+
+	return content, nil
 }
