@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"html"
 	"os"
 	"path"
 	"strings"
@@ -13,11 +12,12 @@ import (
 )
 
 const (
-	flagRepo   = "repo"
-	flagBranch = "branch"
-	flagToken  = "token"
-	flagOut    = "out"
-	flagTheme  = "theme"
+	flagRepo     = "repo"
+	flagBranch   = "branch"
+	flagToken    = "token"
+	flagOut      = "out"
+	flagTheme    = "theme"
+	flagBlogName = "name"
 )
 
 func main() {
@@ -68,8 +68,14 @@ func App() *cli.App {
 			&cli.StringFlag{
 				Name:    flagTheme,
 				Aliases: []string{"th"},
-				Usage:   "Theme for your blog ()",
+				Usage:   "Theme for your blog (template for generation)",
 				Value:   "examples",
+			},
+			&cli.StringFlag{
+				Name:     flagBlogName,
+				Aliases:  []string{"n"},
+				Usage:    "Name of your blog (for title)",
+				Required: true,
 			},
 		},
 		// validate required params
@@ -95,6 +101,7 @@ func App() *cli.App {
 			gitToken := strings.TrimSpace(c.String(flagToken))
 			outDir := strings.TrimSpace(c.String(flagOut))
 			themeName := strings.TrimSpace(c.String(flagTheme))
+			blogName := strings.TrimSpace(c.String(flagBlogName))
 
 			// check whether the git repository is private or public by the presence of git token
 			isPrivate := !utils.IsEmptyString(gitToken)
@@ -108,12 +115,12 @@ func App() *cli.App {
 			// ready to go, print welcome message
 			fmt.Println("Welcome to Markdown Blog generator")
 
-			return generateBlog(files, themeName, outDir)
+			return generateBlog(files, blogName, themeName, outDir)
 		},
 	}
 }
 
-func generateBlog(files []utils.File, themeName, outDir string) error {
+func generateBlog(files []utils.File, blogName, themeName, outDir string) error {
 	// remove the output directory if exists
 	err := os.RemoveAll(outDir)
 	if err != nil {
@@ -144,10 +151,11 @@ func generateBlog(files []utils.File, themeName, outDir string) error {
 			return err
 		}
 
-		// TODO: create template data
+		// create template data
 		data := map[string]string{
-			"title":    "Hello World",
-			"contents": html.UnescapeString(result),
+			"title":    utils.CreateTitle(file.Name),
+			"contents": utils.StringifyHTML(result),
+			"name":     blogName,
 		}
 
 		// create file writer
@@ -165,7 +173,7 @@ func generateBlog(files []utils.File, themeName, outDir string) error {
 		}
 	}
 
-	// TODO: copy assets (css, js, etc) into the output directory
+	// copy assets (css, js, etc) into the output directory
 	err = utils.CopyDirectory(path.Join("themes", themeName, "assets"), path.Join(outDir, "assets"))
 	if err != nil {
 		return err
