@@ -5,11 +5,16 @@ Generate static blog from markdown files in your git repository.
 1. Clone this repo
 2. Install dependencies
 ```bash
-go mod tidy
+go get
 ```
 3. Run the CLI tool
 ```bash
 go run main.go -r <repo-url> -t <token> -o <output-dir> -n <blog-name> -th <theme-name>
+```
+
+Example
+```
+go run main.go -r https://github.com/madeindra/markdownblog-example -o generated -n "Example Blog" -th examples
 ```
 
 CLI Flags:
