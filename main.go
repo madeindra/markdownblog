@@ -120,6 +120,7 @@ func App() *cli.App {
 	}
 }
 
+// generateBlog is a function to generate blog from markdown files
 func generateBlog(files []utils.File, blogName, themeName, outDir string) error {
 	// remove the output directory if exists
 	err := os.RemoveAll(outDir)
@@ -134,6 +135,7 @@ func generateBlog(files []utils.File, blogName, themeName, outDir string) error 
 	}
 
 	// loop through all files
+	posts := make([]utils.Post, 0)
 	for _, file := range files {
 		// read content of files by downloading content
 		content, err := utils.DownloadContent(file.URL)
@@ -171,6 +173,12 @@ func generateBlog(files []utils.File, blogName, themeName, outDir string) error 
 		if err != nil {
 			return err
 		}
+
+		// append to posts
+		posts = append(posts, utils.Post{
+			Data:     result,
+			Filename: filename,
+		})
 	}
 
 	// copy assets (css, js, etc) into the output directory
@@ -179,7 +187,43 @@ func generateBlog(files []utils.File, blogName, themeName, outDir string) error 
 		return err
 	}
 
-	// TODO: create index.html as homepage according to the parameters (theme, title, etc)
+	// create index.html as homepage according to the parameters
+	generateIndex(posts, blogName, themeName, outDir)
+
+	return nil
+}
+
+// generateIndex is a function to generate index.html as homepage
+func generateIndex(posts []utils.Post, blogName, themeName, outDir string) error {
+	// put each parsed file into the templates according
+	filepath := path.Join("themes", themeName, "templates", "template.html")
+	tmpl, err := template.ParseFiles(filepath)
+	if err != nil {
+		return err
+	}
+
+	summaries := utils.CreateSummaries(posts)
+
+	// create template data
+	data := map[string]interface{}{
+		"title":    blogName,
+		"name":     blogName,
+		"contents": summaries,
+	}
+
+	// create file writer
+	filename := "index.html"
+	newFile, err := os.Create(path.Join(outDir, filename))
+	if err != nil {
+		return err
+	}
+	defer newFile.Close()
+
+	// execute template and write the result into the new file
+	err = tmpl.Execute(newFile, data)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
