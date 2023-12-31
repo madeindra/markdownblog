@@ -190,3 +190,21 @@ func CopyFile(src, dest string) error {
 
 	return nil
 }
+
+// CreateTitle convert from file name to title
+func CreateTitle(filename string) string {
+	// early return if filename is empty
+	if filename == "" {
+		return ""
+	}
+
+	// strip .md from the end of the filename
+	title := strings.TrimSuffix(filename, ".md")
+
+	// replace all hyphens or underscore with space
+	title = strings.ReplaceAll(title, "-", " ")
+	title = strings.ReplaceAll(title, "_", " ")
+
+	// capitalize each word
+	return strings.Title(title)
+}

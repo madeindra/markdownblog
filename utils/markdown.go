@@ -4,10 +4,12 @@ import (
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
+
+	gohtml "html"
 )
 
 // MarkdownToHTML convert markdown content into html
-func MarkdownToHTML(content []byte) string {
+func MarkdownToHTML(content []byte) []byte {
 	// initialize parser
 	extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
 	mdParser := parser.NewWithExtensions(extensions)
@@ -20,5 +22,10 @@ func MarkdownToHTML(content []byte) string {
 	opts := html.RendererOptions{Flags: htmlFlags}
 	htmlRenderer := html.NewRenderer(opts)
 
-	return string(markdown.Render(res, htmlRenderer))
+	return markdown.Render(res, htmlRenderer)
+}
+
+// StringifyHTML convert html content into string and unescape it
+func StringifyHTML(content []byte) string {
+	return gohtml.UnescapeString((string(content)))
 }
