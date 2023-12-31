@@ -5,3 +5,4 @@ Generate static blog from markdown files in your git repository.
 - [ ] Generate from a Github repo (public & private)
 - [ ] Generate from a Gitlab repo (public & private)
 - [ ] Branch selection
+- [ ] Generate from a source directory
