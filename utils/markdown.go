@@ -12,6 +12,12 @@ import (
 	gohtml "html"
 )
 
+// Post is a struct to store parsed markdown content
+type Post struct {
+	Data     []byte
+	Filename string
+}
+
 // MarkdownToHTML convert markdown content into html
 func MarkdownToHTML(content []byte) []byte {
 	// initialize parser
@@ -54,8 +60,34 @@ func stripTags(input string) string {
 	return pattern.ReplaceAllString(input, "")
 }
 
-// GetTitle return the title from first heading recursively (h1 to h4), if not found return Untitled
-func GetTitle(content string) string {
+// CreateSummaries is a function to create summaries elements for posts for homepage
+func CreateSummaries(posts []Post) string {
+	var builder strings.Builder
+	for i, post := range posts {
+		// get title from the post
+		title := getTitle(string(post.Data))
+
+		// get summary from the post
+		summary := getSummary(string(post.Data))
+
+		// create summaries element
+		builder.WriteString(fmt.Sprintf(`
+			<h2>%s</h2>
+			<p>%s</p>
+			<a href="%s">Read more...</a>
+		`, title, summary, post.Filename))
+
+		// add <hr> element if not the last post
+		if i != len(posts)-1 {
+			builder.WriteString("<hr>")
+		}
+	}
+
+	return builder.String()
+}
+
+// getTitle return the title from first heading recursively (h1 to h4), if not found return Untitled
+func getTitle(content string) string {
 	// unescape html content
 	content = gohtml.UnescapeString(content)
 
@@ -81,7 +113,8 @@ func GetTitle(content string) string {
 	return "Untitled"
 }
 
-func GetSummary(content string) string {
+// getSummary return the first paragraph from html string, if not found return No summary
+func getSummary(content string) string {
 	// unescape html content
 	content = gohtml.UnescapeString(content)
 
