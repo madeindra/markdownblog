@@ -117,6 +117,12 @@ func App() *cli.App {
 
 			return generateBlog(files, blogName, themeName, outDir)
 		},
+		After: func(c *cli.Context) error {
+			// print success message
+			fmt.Println("Blog generated successfully")
+
+			return nil
+		},
 	}
 }
 
