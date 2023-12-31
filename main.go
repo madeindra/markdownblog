@@ -17,6 +17,7 @@ const (
 	flagBranch = "branch"
 	flagToken  = "token"
 	flagOut    = "out"
+	flagTheme  = "theme"
 )
 
 func main() {
@@ -64,6 +65,12 @@ func App() *cli.App {
 				Usage:   "Output directory for result",
 				Value:   "generated",
 			},
+			&cli.StringFlag{
+				Name:    flagTheme,
+				Aliases: []string{"th"},
+				Usage:   "Theme for your blog ()",
+				Value:   "examples",
+			},
 		},
 		// validate required params
 		Before: func(c *cli.Context) error {
@@ -87,6 +94,7 @@ func App() *cli.App {
 			gitBranch := strings.TrimSpace(c.String(flagBranch))
 			gitToken := strings.TrimSpace(c.String(flagToken))
 			outDir := strings.TrimSpace(c.String(flagOut))
+			themeName := strings.TrimSpace(c.String(flagTheme))
 
 			// check whether the git repository is private or public by the presence of git token
 			isPrivate := !utils.IsEmptyString(gitToken)
@@ -100,12 +108,12 @@ func App() *cli.App {
 			// ready to go, print welcome message
 			fmt.Println("Welcome to Markdown Blog generator")
 
-			return generateBlog(files, outDir)
+			return generateBlog(files, themeName, outDir)
 		},
 	}
 }
 
-func generateBlog(files []utils.File, outDir string) error {
+func generateBlog(files []utils.File, themeName, outDir string) error {
 	// remove the output directory if exists
 	err := os.RemoveAll(outDir)
 	if err != nil {
@@ -129,8 +137,8 @@ func generateBlog(files []utils.File, outDir string) error {
 		// convert each markdown into html
 		result := utils.MarkdownToHTML(content)
 
-		// TODO: put each parsed file into the templates according to the parameters (theme)
-		filepath := path.Join("examples", "templates", "template.html")
+		// put each parsed file into the templates according
+		filepath := path.Join("themes", themeName, "templates", "template.html")
 		tmpl, err := template.ParseFiles(filepath)
 		if err != nil {
 			return err
@@ -158,7 +166,7 @@ func generateBlog(files []utils.File, outDir string) error {
 	}
 
 	// TODO: copy assets (css, js, etc) into the output directory
-	err = utils.CopyDirectory(path.Join("examples", "assets"), path.Join(outDir, "assets"))
+	err = utils.CopyDirectory(path.Join("themes", themeName, "assets"), path.Join(outDir, "assets"))
 	if err != nil {
 		return err
 	}
